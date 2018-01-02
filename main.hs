@@ -1,16 +1,19 @@
-data QTree  =  Empty
-            | Entity String
-            | QuestionNode String QTree QTree deriving (Show)
+module Main where
+
+import System.IO
+import Initializer
+import Game
+import Tree
 
 main :: IO ()
 main = do
-    putStrLn "Welcome to 20 Questions"
-    let entity1 = Entity "Dog"
-    let entity2 = Entity "Cat"
-    let entity3 = Entity "Roach"
-    let entity4 = Entity "Moose"
-    let question1 = QuestionNode "Does it have antlers?" entity4 entity1
-    let question2 = QuestionNode "Does it have whiskers?" entity2 question1
-    let question3 = QuestionNode "Is it bigger than a toaster?" question2 entity3
-    putStrLn ("Tree: " ++ (show question3))
-    putStrLn "Hello"
+  putStrLn "Welcome to 20 Questions"
+  putStrLn "Please think of something. Press enter when ready..."
+  v <- getLine
+  let
+    tree = Initializer.animals
+    node = Tree.get tree
+    firstAnimal = case node of
+      Question q (l, r) p -> q
+      Entity e p -> e
+  putStrLn firstAnimal
