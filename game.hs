@@ -2,6 +2,7 @@ module Game (makeGuesses, Mode(Play, Edit)) where
 
 import Tree
 import System.IO
+import Serializer
 import Data.Text as Text
 import Data.Char as Char
 
