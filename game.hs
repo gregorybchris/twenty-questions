@@ -27,11 +27,11 @@ makeGuesses tree mode guesses = do
       case response of
         Yes -> do
           putStrLn "Nice"
-          promptPlayAgain tree mode guesses
+          promptPlayAgain tree mode
         No -> do
           putStrLn "Congrats! you stumped me."
           case mode of
-            Play -> promptPlayAgain tree mode guesses
+            Play -> promptPlayAgain tree mode
             Edit serializer -> do
               putStrLn "What were you thinking of?"
               newEntity <- getLine
@@ -39,7 +39,7 @@ makeGuesses tree mode guesses = do
               newQuestion <- getLine
               let updatedTree = Tree.reset $ updateTree tree entity newEntity newQuestion
               Serializer.serialize serializer updatedTree
-              promptPlayAgain updatedTree mode guesses
+              promptPlayAgain updatedTree mode
 
 updateTree :: Tree -> String -> String -> String -> Tree
 updateTree oldTree oldEntity newEntity newQuestion = let
@@ -49,12 +49,12 @@ updateTree oldTree oldEntity newEntity newQuestion = let
   updatedTree = Tree.set oldTree newQustionNode
   in updatedTree
 
-promptPlayAgain :: Tree -> Mode -> Int -> IO ()
-promptPlayAgain tree mode guesses = do
+promptPlayAgain :: Tree -> Mode -> IO ()
+promptPlayAgain tree mode = do
   playAgain <- getResponse "Play again?"
   case playAgain of
     No -> return ()
-    Yes -> makeGuesses tree mode (guesses + 1)
+    Yes -> playGame tree mode
 
 getDirection :: Response -> Tree.Direction
 getDirection r = case r of
