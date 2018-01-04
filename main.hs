@@ -5,6 +5,7 @@ import System.FilePath
 import Initializer
 import Serializer
 import Game
+import Tree
 
 data InputType = ByInitializer
                | BySerializer
@@ -12,8 +13,9 @@ data InputType = ByInitializer
 -- ~  ~  ~  ~  ~  ~  ~  ~  ~  ~  ~  ~  ~  ~  ~
 --                    Settings
 --
-inputMode = ByInitializer :: InputType
+inputMode = BySerializer :: InputType
 inputFile = "animals.tq" :: FilePath
+inputTree = Initializer.animals :: Tree
 outputMode = True :: Bool
 outputFile = "animals.tq" :: FilePath
 --
@@ -31,17 +33,17 @@ startGame :: IO ()
 startGame = do
   case inputMode of
     ByInitializer -> do
-      let tree = Initializer.animals
+      let tree = inputTree
       case outputMode of
         True -> do
           let outputSerializer = Serializer.newSerializer outputFile
-          Game.makeGuesses tree (Edit outputSerializer)
-        False -> Game.makeGuesses tree Play
+          Game.playGame tree (Edit outputSerializer)
+        False -> Game.playGame tree Play
     BySerializer -> do
       let inputSerializer = Serializer.newSerializer inputFile
       tree <- Serializer.deserialize inputSerializer
       case outputMode of
         True -> do
           let outputSerializer = Serializer.newSerializer outputFile
-          Game.makeGuesses tree (Edit outputSerializer)
-        False -> Game.makeGuesses tree Play
+          Game.playGame tree (Edit outputSerializer)
+        False -> Game.playGame tree Play

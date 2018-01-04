@@ -1,4 +1,4 @@
-module Game (makeGuesses, Mode(Play, Edit)) where
+module Game (playGame, Mode(Play, Edit)) where
 
 import Tree
 import System.IO
@@ -10,24 +10,28 @@ data Response = Yes | No
 data Mode = Play
           | Edit Serializer
 
-makeGuesses :: Tree -> Mode -> IO ()
-makeGuesses tree mode = do
+playGame :: Tree -> Mode -> IO ()
+playGame tree mode = makeGuesses tree mode 1
+
+makeGuesses :: Tree -> Mode -> Int -> IO ()
+makeGuesses tree mode guesses = do
   case (Tree.get tree) of
     Question question _ _ -> do
+      putStr $ "Question " ++ (show guesses) ++ ": "
       response <- getResponse question
       let direction = getDirection response
       let movedTree = Tree.move tree direction
-      makeGuesses movedTree mode
+      makeGuesses movedTree mode (guesses + 1)
     Entity entity -> do
       response <- getResponse $ "Were you thinking of " ++ entity ++ "?"
       case response of
         Yes -> do
           putStrLn "Nice"
-          promptPlayAgain tree mode
+          promptPlayAgain tree mode guesses
         No -> do
-          putStrLn "Congrats you stumped me!"
+          putStrLn "Congrats! you stumped me."
           case mode of
-            Play -> promptPlayAgain tree mode
+            Play -> promptPlayAgain tree mode guesses
             Edit serializer -> do
               putStrLn "What were you thinking of?"
               newEntity <- getLine
@@ -35,7 +39,7 @@ makeGuesses tree mode = do
               newQuestion <- getLine
               let updatedTree = Tree.reset $ updateTree tree entity newEntity newQuestion
               Serializer.serialize serializer updatedTree
-              promptPlayAgain updatedTree mode
+              promptPlayAgain updatedTree mode guesses
 
 updateTree :: Tree -> String -> String -> String -> Tree
 updateTree oldTree oldEntity newEntity newQuestion = let
@@ -45,12 +49,12 @@ updateTree oldTree oldEntity newEntity newQuestion = let
   updatedTree = Tree.set oldTree newQustionNode
   in updatedTree
 
-promptPlayAgain :: Tree -> Mode -> IO ()
-promptPlayAgain tree mode = do
+promptPlayAgain :: Tree -> Mode -> Int -> IO ()
+promptPlayAgain tree mode guesses = do
   playAgain <- getResponse "Play again?"
   case playAgain of
     No -> return ()
-    Yes -> makeGuesses tree mode
+    Yes -> makeGuesses tree mode (guesses + 1)
 
 getDirection :: Response -> Tree.Direction
 getDirection r = case r of

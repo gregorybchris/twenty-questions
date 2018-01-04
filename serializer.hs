@@ -10,9 +10,9 @@ newSerializer path = Serializer path
 
 serialize :: Serializer -> Tree -> IO ()
 serialize (Serializer file) tree = do
-  writeFile file $ show $ tree
+  writeFile file $ map succ $ show tree
 
 deserialize :: Serializer -> IO Tree
 deserialize (Serializer file) = do
   fileText <- readFile file
-  return $ read fileText
+  return $ read $ map pred fileText
