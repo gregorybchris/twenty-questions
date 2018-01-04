@@ -12,49 +12,48 @@ data Mode = Play
 
 makeGuesses :: Tree -> Mode -> IO ()
 makeGuesses tree mode = do
+  putStrLn $ show tree
   case (Tree.get tree) of
     Question question _ _ -> do
       response <- getResponse question
       let direction = getDirection response
       let movedTree = Tree.move tree direction
       makeGuesses movedTree mode
-    Entity entity parent -> do
+    Entity entity -> do
       response <- getResponse $ "Were you thinking of " ++ entity ++ "?"
       case response of
-        Yes -> putStrLn "Nice"
+        Yes -> do
+          putStrLn "Nice"
+          promptPlayAgain tree mode
         No -> do
           putStrLn "Congrats you stumped me!"
           case mode of
-            Play -> return ()
+            Play -> promptPlayAgain tree mode
             Edit serializer -> do
               putStrLn "What were you thinking of?"
               newEntity <- getLine
               putStrLn $ "Enter a question that is true for " ++ newEntity ++ ", but not for " ++ entity
               newQuestion <- getLine
-              let updatedTree = Tree.reset $ updateTree tree entity parent newEntity newQuestion
+              let updatedTree = Tree.reset $ updateTree tree entity newEntity newQuestion
               Serializer.serialize serializer updatedTree
-          putStrLn "GAME OVER"
-          playAgain <- getResponse "Play again?"
-          case playAgain of
-            No -> return ()
-            Yes -> makeGuesses (Tree.reset tree) mode
+              promptPlayAgain updatedTree mode
 
-updateTree :: Tree -> String -> Parent -> String -> String -> Tree
-updateTree oldTree oldEntity oldParent newEntity newQuestion = let
-  newParent = case oldParent of
-    Nothing -> Nothing
-    Just (oldParentNode, d) -> let
-      Question q (l, r) gp = oldParentNode
-      in case d of
-        R -> Just ((Question q (l, newQuestionNode) gp), d)
-        L -> Just ((Question q (newQuestionNode, r) gp), d)
-  newEntityNode = Entity newEntity (Just (newQuestionNode, Tree.L))
-  oldEntityNode = Entity oldEntity (Just (newQuestionNode, Tree.R))
-  newQuestionNode = Question newQuestion (newEntityNode, oldEntityNode) newParent
-  updatedTree = Tree.newTree newQuestionNode
+updateTree :: Tree -> String -> String -> String -> Tree
+updateTree oldTree oldEntity newEntity newQuestion = let
+  newEntityNode = Entity newEntity
+  oldEntityNode = Entity oldEntity
+  newQustionNode = Question newQuestion newEntityNode oldEntityNode
+  updatedTree = Tree.set oldTree newQustionNode
   in updatedTree
 
-getDirection :: Response -> Tree.Dir
+promptPlayAgain :: Tree -> Mode -> IO ()
+promptPlayAgain tree mode = do
+  playAgain <- getResponse "Play again?"
+  case playAgain of
+    No -> return ()
+    Yes -> makeGuesses tree mode
+
+getDirection :: Response -> Tree.Direction
 getDirection r = case r of
   No -> Tree.R
   Yes -> Tree.L

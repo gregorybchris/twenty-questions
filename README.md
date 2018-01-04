@@ -12,9 +12,9 @@ Before now I was shaky on Haskell IO, so I decided to dive right in with a proje
 
 ## How to Run
 
-- Change input and output in main.hs
-- Ensure you have a Haskell compiler installed ``` ghc --version ```
-- Run with:
+- Adjust input and output settings in `main.hs` if desired
+- Ensure you have a Haskell compiler installed `ghc --version`
+- Compile and run with:
 
 ```Haskell
   ghc main.hs
