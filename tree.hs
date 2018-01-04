@@ -1,5 +1,5 @@
-module Tree (Tree, Dir(L, R), Node(Entity, Question),
-  newTree, get, set, move, reset)
+module Tree (Tree, Dir(L, R), Node(Entity, Question), Parent,
+  newTree, get, newTreeWithParent, move, reset)
 where
 
 data Dir = L | R deriving (Show, Enum)
@@ -8,9 +8,9 @@ type Children = (Node, Node)
 type Parent = Maybe (Node, Dir)
 
 data Node = Entity String Parent
-          | Question String Children Parent deriving (Show)
+          | Question String Children Parent
 
-newtype Tree = Tree (Node) deriving (Show)
+newtype Tree = Tree (Node)
 
 newTree :: Node -> Tree
 newTree n = Tree n
@@ -18,26 +18,10 @@ newTree n = Tree n
 get :: Tree -> Node
 get (Tree n) = n
 
-set :: Tree -> Node -> Tree
-set (Tree (Entity e p)) n = let
-  newParent = setParentBranch p newCurrent
-  newCurrent = (Entity e newParent)
-  in (Tree newCurrent)
-set (Tree (Question q (l, r) p)) n = let
-  newParent = setParentBranch p newCurrent
-  newCurrent = (Question q (l, r) newParent)
-  in (Tree newCurrent)
-
-setParentBranch :: Parent -> Node -> Parent
-setParentBranch p n = case p of
-  Nothing -> Nothing
-  Just (parent, d) -> Just ((setQuestionBranch parent d n), d)
-
-setQuestionBranch :: Node -> Dir -> Node -> Node
-setQuestionBranch (Question q (l, r) p) d n = case d of
-      L -> (Question q (n, r) p)
-      R -> (Question q (l, n) p)
-setQuestionBranch _ _ _ = error ("ERROR: Tree.setQuestionBranch must be a question to set branch")
+newTreeWithParent :: Node -> Parent -> Tree
+newTreeWithParent n p = case n of
+  Entity e _ -> Tree (Entity e p)
+  Question q (l, r) _ -> Tree (Question q (l, r) p)
 
 move :: Tree -> Dir -> Tree
 move (Tree (Question _ (l, r) _)) d = case d of

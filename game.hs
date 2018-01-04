@@ -7,42 +7,52 @@ import Data.Text as Text
 import Data.Char as Char
 
 data Response = Yes | No
-data Mode = Play | Edit
+data Mode = Play
+          | Edit Serializer
 
 makeGuesses :: Tree -> Mode -> IO ()
-makeGuesses t m = do
-  let node = Tree.get t
-  case node of
-    (Question q (l, r) p) -> do
-      response <- getResponse q
+makeGuesses tree mode = do
+  case (Tree.get tree) of
+    Question question _ _ -> do
+      response <- getResponse question
       let direction = getDirection response
-      let newTree = Tree.move t direction
-      makeGuesses newTree m
-    (Entity e p) -> do
-      response <- getResponse $ "Were you thinking of " ++ e ++ "?"
+      let movedTree = Tree.move tree direction
+      makeGuesses movedTree mode
+    Entity entity parent -> do
+      response <- getResponse $ "Were you thinking of " ++ entity ++ "?"
       case response of
-        Yes -> do
-          putStrLn "Nice"
+        Yes -> putStrLn "Nice"
         No -> do
           putStrLn "Congrats you stumped me!"
-          case m of
-            Play -> do return ()
-            Edit -> do
+          case mode of
+            Play -> return ()
+            Edit serializer -> do
               putStrLn "What were you thinking of?"
               newEntity <- getLine
-              putStrLn $ "Enter a question that is true for " ++ newEntity ++ ", but not for " ++ e
+              putStrLn $ "Enter a question that is true for " ++ newEntity ++ ", but not for " ++ entity
               newQuestion <- getLine
-              return ()
-              -- Update tree and serialize
+              let updatedTree = Tree.reset $ updateTree tree entity parent newEntity newQuestion
+              Serializer.serialize serializer updatedTree
           putStrLn "GAME OVER"
           playAgain <- getResponse "Play again?"
           case playAgain of
-            No -> do return ()
-            Yes -> do
-              putStrLn "Please think of something. Press enter when ready..."
-              getLine
-              let resetTree = Tree.reset t
-              makeGuesses resetTree m
+            No -> return ()
+            Yes -> makeGuesses (Tree.reset tree) mode
+
+updateTree :: Tree -> String -> Parent -> String -> String -> Tree
+updateTree oldTree oldEntity oldParent newEntity newQuestion = let
+  newParent = case oldParent of
+    Nothing -> Nothing
+    Just (oldParentNode, d) -> let
+      Question q (l, r) gp = oldParentNode
+      in case d of
+        R -> Just ((Question q (l, newQuestionNode) gp), d)
+        L -> Just ((Question q (newQuestionNode, r) gp), d)
+  newEntityNode = Entity newEntity (Just (newQuestionNode, Tree.L))
+  oldEntityNode = Entity oldEntity (Just (newQuestionNode, Tree.R))
+  newQuestionNode = Question newQuestion (newEntityNode, oldEntityNode) newParent
+  updatedTree = Tree.newTree newQuestionNode
+  in updatedTree
 
 getDirection :: Response -> Tree.Dir
 getDirection r = case r of
@@ -55,13 +65,11 @@ getResponse prompt = do
   input <- getLine
   let lowerInput = Text.unpack $ Text.toLower $ Text.pack input
   case lowerInput of
-    "n" -> do return No
-    "no" -> do return No
-    "y" -> do return Yes
-    "yes" -> do return Yes
+    "n" -> return No
+    "y" -> return Yes
     _ -> do
       r <- getResponse $ "Invalid input. Try again (y/n)"
       return r
 
-getArticle :: String -> String
-getArticle (x:xs) = if (elem (Char.toLower x) "aeiou") then "an" else "a"
+-- getArticle :: String -> String
+-- getArticle (x:xs) = if (elem (Char.toLower x) "aeiou") then "an" else "a"
