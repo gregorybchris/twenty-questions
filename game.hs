@@ -12,7 +12,6 @@ data Mode = Play
 
 makeGuesses :: Tree -> Mode -> IO ()
 makeGuesses tree mode = do
-  putStrLn $ show tree
   case (Tree.get tree) of
     Question question _ _ -> do
       response <- getResponse question
