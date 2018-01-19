@@ -27,7 +27,7 @@ makeGuesses tree mode guesses = do
       case response of
         Yes -> do
           putStrLn "Nice"
-          promptPlayAgain tree mode
+          promptPlayAgain (Tree.reset tree) mode
         No -> do
           putStrLn "Congrats! you stumped me."
           case mode of
